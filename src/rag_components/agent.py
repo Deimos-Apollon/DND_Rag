@@ -11,7 +11,6 @@ from src.rag_components.retrieval.retriever_rulebook import get_index
 load_dotenv()
 
 
-# Создаем кастомный промпт
 qa_prompt_template = PromptTemplate(
     "Контекстная информация ниже:\n"
     "---------------------\n"
@@ -26,10 +25,27 @@ qa_prompt_template = PromptTemplate(
 
 
 class Agent:
-    def __init__(self, llm=None):
+    """D&D assistant agent powered by RAG (Retrieval-Augmented Generation).
+    
+    Attributes:
+        llm (GigaChatLLM): Language model for response generation
+        index (VectorStoreIndex): Knowledge base index
+        query_engine (BaseQueryEngine): Engine for query processing
+    """
+
+    def __init__(self, llm: GigaChatLLM = None):
+        """Initialize D&D assistant agent with LLM and knowledge base.
+        
+        Args:
+            llm (GigaChatLLM): Optional pre-configured language model instance.
+                Creates new instance if not provided.
+                
+        Environment Variables:
+            GIGACHAT_CREDENTIALS: Authentication credentials for GigaChat API
+        """
         if not llm:
             llm = GigaChatLLM(
-                credentials=os.getenv('gigachat_credentials'),
+                credentials=os.getenv("GIGACHAT_CREDENTIALS"),
                 verify_ssl_certs=False
             )
             Settings.llm = llm
@@ -48,13 +64,31 @@ class Agent:
             text_qa_template=qa_prompt_template
         )
 
-    def answer(self, query):
-        response = self.query_engine.query(
-            query
+    def answer(self, query: str) -> str:
+        """Process user query and generate structured response.
+        
+        Args:
+            query (str): Natural language question about D&D rules/lore
+            
+        Returns:
+            str: Formatted response with relevant information
+        """
+        response = self.query_engine.query(query)
+        context = "\nNODE\n" + "\nNODE\n".join(
+            [node.dict()["node"]["text"] for node in response.source_nodes]
         )
-        context = "\nNODE\n" + "\nNODE\n".join([node.dict()['node']['text'] for node in response.source_nodes])
-        print(f'\n\nNew query: {query}')
+        print(f"\n\nNew query: {query}")
         print(response)
         print(context)
         return response.response
 
+    def _get_response(self, query: str) -> object:
+        """Internal method to execute query processing.
+        
+        Args:
+            query (str): Input question/request
+            
+        Returns:
+            object: Raw response object from query engine
+        """
+        return self.query_engine.query(query)
