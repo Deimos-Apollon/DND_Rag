@@ -11,10 +11,10 @@ from llama_index.core.evaluation import (
     generate_question_context_pairs,
 )
 
-from src.rag_components.agent import Agent
+from src.rag_components.assistant import Assistant
 
 
-assistant = Agent()
+assistant = Assistant()
 llm = GigaChatLLM(
     credentials=os.getenv("gigachat_credentials"),
     verify_ssl_certs=False,
